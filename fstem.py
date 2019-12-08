@@ -163,17 +163,18 @@ def getRuleTE(kata: str):
             isvocal(kata[3]) and kata[3] != 'r' and \
             kata[4:6] == 'er' and isvocal(kata[6]):
         return 10
+    return 0
 
 
 def getRuleME(kata: str, stemmer_choice: Stemmer):
-    if stemmer_choice == Stemmer.STANDARD_CS_STEMMER:
+    if stemmer_choice.value == 2:
         if kata.startswith("men") and \
                 kata[3] in ['c', 'd', 'j', 'z']:
             return 14
         elif kata.startswith("memp") and kata[4] != 'e' and \
                 isvokal(kata[4]):
             return 19
-    elif stemmer_choice == Stemmer.ENHANCED_CS_STEMMER:
+    elif stemmer_choice.value == 3:
         if kata.startswith("men") and \
                 kata[3] in ['c', 'd', 'j', 'z', 's']:
             return 14
@@ -200,6 +201,7 @@ def getRuleME(kata: str, stemmer_choice: Stemmer):
         return 17
     elif kata.startswith("meny") and isvocal(kata[4]):
         return 18
+    return 0
 
 
 def getRulePE(kata: str, stemmer_choice: Stemmer):
@@ -249,6 +251,7 @@ def getRulePE(kata: str, stemmer_choice: Stemmer):
             kata[2] not in ['l', 'r', 'm', 'n', 'w', 'y'] and \
             kata[3:5] == 'er' and isnotvocal(kata[5]):
         return 36
+    return 0
 
 
 def getPrefix(rule: int, kata: str):
@@ -303,7 +306,9 @@ def getPrefix(rule: int, kata: str):
         29: "peng",
         30: "peng",
         31: "peny",
-        32: "pel" if kata == "pelajar" else "pe"
+        32: "pel" if kata.startswith("pelajar") else "pe",
+
+        0 : "",
     }
 
     return switcher.get(rule, 0)
@@ -340,4 +345,4 @@ def getReduksi(rule: int, kata: str):
     elif rule == 4:
         return "ajar"
     elif rule == 32:
-        return "ajar" if kata == "pelajar" else kata[2:]
+        return "ajar" if kata.startswith("pelajar") else kata[2:]

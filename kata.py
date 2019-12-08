@@ -13,6 +13,7 @@ class Stemmer(Enum):
 class Kata:
     rule: int = 0
     log_rules: int = 0
+    prefix_sama: bool = False
 
     def __init__(self, label, bentuk_dasar="", stemmer_choice=Stemmer.ENHANCED_CS_STEMMER):
         self.label = label
@@ -45,7 +46,7 @@ class Kata:
 
         partikel = fstem.getPartikel(kata)
         pp = fstem.getPP(kata[:len(kata) - len(partikel)])
-        ds = fstem.getDS(kata[:len(kata) - len(partikel)])
+        ds = fstem.getDS(kata[:len(kata) - len(partikel) - len(pp)])
 
         kata = self.reduksi_akhiran(kata, partikel, pp, ds)
         log_kata_berawalan = self.reduksi_akhiran(self.label, partikel, pp, ds)
@@ -54,7 +55,7 @@ class Kata:
 
         if isprecedence:
             if prefix_sama:
-                kata = self.recoding(log_rules)
+                kata = self.recoding(log_rules, kata)
             else:
                 kata = self.recoding(rule, kata)
 
@@ -78,11 +79,12 @@ class Kata:
 
             kiri.stem()
             kanan.stem()
-            stem_kiri = kiri.get_bentuk_dasar(self.stemmer_choice)
-            stem_kanan = kanan.get_bentuk_dasar(self.stemmer_choice)
+            stem_kiri = kiri.bentuk_dasar
+            stem_kanan = kanan.bentuk_dasar
 
             if (stem_kiri == stem_kanan) and stem_kiri != "":
                 self.bentuk_dasar = stem_kiri
+                return
 
         if self._check_dict_change(kata):
             return
@@ -105,6 +107,7 @@ class Kata:
 
         while count <= 3:
             if fstem.cekKombinasiTerlarang(word, ds):
+                # word = kata + ds
                 break
 
             rule = fstem.getRule(word, self.stemmer_choice)
@@ -112,6 +115,7 @@ class Kata:
 
             if rule == 0:
                 rule = log_rules
+                break
 
             if prefix == log_prefix:
                 prefix_sama = True
@@ -131,6 +135,7 @@ class Kata:
                 word = self.recoding(log_rules, word)
             else:
                 word = self.recoding(rule, word)
+        return word
 
     def reduksi_awalan(self, kata: str, ds: str, isrecoded: bool):
         hasil = kata
@@ -154,6 +159,8 @@ class Kata:
             kata = kata[:len(kata) - len(ds)]
             if kamus.check(kata):
                 return kata
+            else:
+                kata = kata + ds
 
         return kata
 
@@ -169,11 +176,21 @@ class Kata:
                 return log
 
         while ds != "":
+            hasil = hasil[:len(hasil)-len(ds)]
+            if kamus.check(hasil):
+                    return hasil
+            log = log[:len(log)-len(ds)]
+            if kamus.check(log):
+                    return log
             if ds == "kan":
                 hasil = hasil + "k"
                 ds = "an"
+            elif ds == 'an':
+                hasil = hasil
+                ds = ''
             else:
                 hasil = hasil + ds
+                ds=''
 
             if kamus.check(hasil):
                 return hasil
@@ -224,8 +241,8 @@ class Kata:
                 result = recoding_chr + kata[1:]
             else:
                 result = recoding_chr + kata
-                if self.stemmer_choice == Stemmer.ENHANCED_CS_STEMMER and \
-                        rule in [17, 30] and (not kamus.check(result)):
-                    result = result[2:]
+                # if self.stemmer_choice == Stemmer.ENHANCED_CS_STEMMER and \
+                #         rule in [17, 30] and (not kamus.check(result)):
+                #     result = result[2:]
 
         return result
